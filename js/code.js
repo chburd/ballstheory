@@ -34,6 +34,8 @@ var clicOk = 0;
 //nb de clics dans le vide ou sur une mauvaise balle
 var clicKo = 0;
 var ballToClic = 0;
+var noMoreLevel=false;
+var timeExpired=false;
 
 $(function () {
     init();
@@ -61,7 +63,7 @@ function init() {
     //Tailles disponibles
     sizes = [initSize(25, "grande", 150), initSize(17, "moyenne", 100), initSize(10, "petite", 50)];
     //Couleurs disponibles
-    colors = [initColor("#FF0000", "rouge"), initColor("#FF00FF", "fuschia"), initColor("#228B22", "vert"), initColor("#ffa500", "orange")];
+    colors = [initColor("#FF0000", "rouge"), initColor("#FF00FF", "fuschia"), initColor("#228B22", "vert")];
 
 
 
@@ -210,7 +212,7 @@ function afficheJeu() {
     timerDisplay = setInterval(ChangeAndDisplayTimer, 100);
     DisplayTimer();
     //le timeout
-    timeout = setTimeout(Stopper, timer);
+    timeout = setTimeout(TempsEcoule, timer);
 }
 
 function initLevels() {
@@ -232,7 +234,15 @@ function afficheBilan() {
     $('#accueil').hide();
     $('#jeu').hide();
     $('#bilan').show();
-    $('#recap').html("Points : " + clicOk + "/" + ballToClic);
+    var recap ="";
+    if(noMoreLevel){
+        recap = recap + "Niveaux termines. ";
+    }
+    if(timeExpired){
+         recap = recap + "Temps expire. ";
+    }
+    recap = recap + "Points : " + clicOk + "/" + ballToClic;
+    $('#recap').html(recap);
 }
 
 function afficheAccueil() {
@@ -251,7 +261,8 @@ function ChangeAndDisplayTimer() {
 //afiche le temps restant et le niveau en cours
 function DisplayTimer() {
     if (currentScreen == "jeu") {
-        $('#timer').html("Niveau : " + (currentLevel + 1) + "/" + levels.length + ". Temps restant " + (timer / 1000) + "s");
+        $('#timer').html("Niveau : " + (currentLevel + 1) + "/" + levels.length + ". Balles restantes : "+(ballToClic-clicOk)
+        +". Temps restant " + (timer / 1000) + "s");
     }
 }
 
@@ -285,6 +296,7 @@ function newLevel() {
     currentLevel++;
     //si on a  fini les niveaux on arrete le jeu
     if (currentLevel >= levels.length) {
+        noMoreLevel=true;
         Stopper();
     } else {
         i = 0;
@@ -293,6 +305,11 @@ function newLevel() {
         //regeneration des balles
         balls = levels[currentLevel].balls;
     }
+}
+
+function TempsEcoule(){
+    timeExpired=true;
+    Stopper();
 }
 
 function Stopper() {
@@ -344,7 +361,7 @@ function clicCanvas(e) {
                 //pour chaque clic correct on rajoute 0,5s au timer
                 timer += 500;
                 clearTimeout(timeout);
-                timeout = setTimeout(Stopper, timer);
+                timeout = setTimeout(TempsEcoule, timer);
 
                 $('#bonus').html("Bonus : <span style=\"color:red\"> +0.5s</span>");
                 setTimeout(eraseBonus, 1000);
