@@ -33,7 +33,7 @@ var timerDisplay;
 var clicOk = 0;
 //nb de clics dans le vide ou sur une mauvaise balle
 var clicKo = 0;
-var ballToClic=0;
+var ballToClic = 0;
 
 $(function () {
     init();
@@ -62,16 +62,7 @@ function init() {
     sizes = [initSize(25, "grande", 150), initSize(17, "moyenne", 100), initSize(10, "petite", 50)];
     //Couleurs disponibles
     colors = [initColor("#FF0000", "rouge"), initColor("#FF00FF", "fuschia"), initColor("#228B22", "vert"), initColor("#ffa500", "orange")];
-    //Initialisation des niveaux
-    levels = [];
-    for (var j = 0; j < 15; j++) { //niveaux crees aleatoirement
-        var level = new Object();
-        var color = Math.floor(Math.random() * colors.length);
-        level.color = colors[color];
-        var size = Math.floor(Math.random() * sizes.length);
-        level.size = sizes[size];
-        levels.push(level);
-    }
+
 
 
     //gestionnaires
@@ -92,6 +83,36 @@ function init() {
     afficheAccueil();
 }
 
+function loadBalls(lvlColor, lvlSize, lvlNumber) {
+    //initialisation des balles pour 1 niveau : entre 2 et 10 balles sont generees
+    //la taille, la couleur, et la vitesse sont aleatoires
+    var nbBalls;
+    var lvlBalls;
+    do {
+        nbBalls = Math.floor((Math.random() * 9) + 2);
+        lvlBalls = [];
+        for (var ballId = 0; ballId < nbBalls; ballId++) {
+            var size = Math.floor(Math.random() * sizes.length);
+            var color = Math.floor(Math.random() * colors.length);
+            var speed = Math.floor(Math.random() * 3) + (lvlNumber + 1);
+            var location = 100 + (ballId * 40);
+            lvlBalls.push(initBall(location, 0, sizes[size].size, colors[color], true, speed, colors[lvlColor], sizes[lvlSize]));
+        }
+    } while (!isPlayableLevel(lvlBalls));
+    return lvlBalls;
+}
+
+function isPlayableLevel(lvlBalls) {
+    var playable = false;
+    for (var ballId = 0; ballId < lvlBalls.length; ballId++) {
+        var ball = lvlBalls[ballId];
+        if (ball.waitClic) {
+            playable = true;
+        }
+    }
+    return playable;
+}
+
 function initBalls() {
     //initialisation des balles pour 1 niveau : entre 2 et 10 balles sont generees
     //la taille, la couleur, et la vitesse sont aleatoires
@@ -106,7 +127,7 @@ function initBalls() {
     }
 }
 
-function initBall(xCoord, yCoord, size, color, displayed, baseSpeed) {
+function initBall(xCoord, yCoord, size, color, displayed, baseSpeed, lvlColor, lvlSize) {
     var ball = new Object();
     ball.x = xCoord;
     ball.y = yCoord;
@@ -114,8 +135,8 @@ function initBall(xCoord, yCoord, size, color, displayed, baseSpeed) {
     ball.display = displayed;
     ball.color = color;
     ball.baseSpeed = baseSpeed;
-    var lvl = levels[currentLevel];
-    if (lvl.size.size == size && lvl.color == color) {
+
+    if (lvlSize.size == size && lvlColor == color) {
         ball.waitClic = true;
         ballToClic++;
     } else {
@@ -174,15 +195,13 @@ function afficheJeu() {
     //reinitialisation du niveau et du compteur de clic
     currentLevel = 0;
     clicOk = 0;
-    clicKo=0;
-    ballToClic=0;
+    clicKo = 0;
+    ballToClic = 0;
+
+    initLevels();
+
     //initialisation des balles
-    initBalls();
-    //avec cette boucle on s'assure qu'il y a au moins 1 balle a cliquer
-    // ex qui poserait probleme : niveau a balles rouges et grandes mais que des balles vertes sont generees
-    while (isEndOfLevel()) {
-        initBalls();
-    }
+    balls = levels[currentLevel].balls;
     //on anime toutes les 100ms
     inter = setInterval(Animer, 100);
     //duree du jeu
@@ -194,12 +213,26 @@ function afficheJeu() {
     timeout = setTimeout(Stopper, timer);
 }
 
+function initLevels() {
+    //Initialisation des niveaux
+    levels = [];
+    for (var j = 0; j < 15; j++) { //niveaux crees aleatoirement
+        var level = new Object();
+        var color = Math.floor(Math.random() * colors.length);
+        level.color = colors[color];
+        var size = Math.floor(Math.random() * sizes.length);
+        level.size = sizes[size];
+        level.balls = loadBalls(color, size, j);
+        levels.push(level);
+    }
+}
+
 function afficheBilan() {
     currentScreen = "bilan";
     $('#accueil').hide();
     $('#jeu').hide();
     $('#bilan').show();
-    $('#recap').html("clics corrects/clics incorrects/nombre de points maximal : " + clicOk+"/"+clicKo+"/"+ballToClic);
+    $('#recap').html("Points : " + clicOk + "/" + ballToClic);
 }
 
 function afficheAccueil() {
@@ -258,9 +291,7 @@ function newLevel() {
         //changement de consigne
         afficheConsigne();
         //regeneration des balles
-        while (isEndOfLevel()) {
-            initBalls();
-        }
+        balls = levels[currentLevel].balls;
     }
 }
 
