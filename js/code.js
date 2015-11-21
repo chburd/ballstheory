@@ -33,6 +33,7 @@ var timerDisplay;
 var clicOk = 0;
 //nb de clics dans le vide ou sur une mauvaise balle
 var clicKo = 0;
+var ballToClic=0;
 
 $(function () {
     init();
@@ -116,6 +117,7 @@ function initBall(xCoord, yCoord, size, color, displayed, baseSpeed) {
     var lvl = levels[currentLevel];
     if (lvl.size.size == size && lvl.color == color) {
         ball.waitClic = true;
+        ballToClic++;
     } else {
         ball.waitClic = false;
     }
@@ -172,6 +174,8 @@ function afficheJeu() {
     //reinitialisation du niveau et du compteur de clic
     currentLevel = 0;
     clicOk = 0;
+    clicKo=0;
+    ballToClic=0;
     //initialisation des balles
     initBalls();
     //avec cette boucle on s'assure qu'il y a au moins 1 balle a cliquer
@@ -195,7 +199,7 @@ function afficheBilan() {
     $('#accueil').hide();
     $('#jeu').hide();
     $('#bilan').show();
-    $('#recap').html("Nombre de clics corrects/clics incorrects : " + clicOk+"/"+clicKo);
+    $('#recap').html("clics corrects/clics incorrects/nombre de points maximal : " + clicOk+"/"+clicKo+"/"+ballToClic);
 }
 
 function afficheAccueil() {
